@@ -20,7 +20,7 @@ import io.openliberty.mcp.internal.fat.tool.ToolTest;
  */
 @RunWith(Suite.class)
 @SuiteClasses({
-                ToolTest.class
+                ToolTest.class,
 })
 public class FATSuite {
 
