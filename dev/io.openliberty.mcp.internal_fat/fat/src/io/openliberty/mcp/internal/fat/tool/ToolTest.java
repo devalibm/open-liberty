@@ -13,10 +13,12 @@ import static com.ibm.websphere.simplicity.ShrinkHelper.DeployOptions.SERVER_ONL
 
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 import com.ibm.websphere.simplicity.ShrinkHelper;
 
@@ -52,7 +54,19 @@ public class ToolTest extends FATServletClient {
     }
 
     @Test
-    public void testEcho() throws Exception {
+    public void postJsonRpc() throws Exception {
+        String jsonBody = "{ \"jsonrpc\": \"2.0\", \"method\": \"tools.call\", \"id\": 1 }";
+
+        HttpRequest request = new HttpRequest(server, "/toolTest/mcp")
+                                                                      .requestProp("Accept", "application/json, text/event-stream")
+                                                                      .jsonBody(jsonBody)
+                                                                      .method("POST");
+
+        System.out.println("Content-Type Header: " + request.getResponseHeaders().get("Content-Type"));
+    }
+
+    @Test
+    public void testEchoWithNumberIdType() throws Exception {
         String request = """
                           {
                           "jsonrpc": "2.0",
@@ -66,8 +80,58 @@ public class ToolTest extends FATServletClient {
                           }
                         }
                         """;
-        String response = new HttpRequest(server, "/toolTest/mcp").jsonBody(request).method("POST").run(String.class);
-        System.out.println("Response: \n" + response); //TODO: do this better
+
+        String response = new HttpRequest(server, "/toolTest/mcp")
+                                                                  .requestProp("Accept", "application/json, text/event-stream")
+                                                                  .jsonBody(request)
+                                                                  .method("POST")
+                                                                  .run(String.class);
+
+        JSONObject jsonResponse = new JSONObject(response);
+        // Lenient mode tests
+        JSONAssert.assertEquals("{ \"jsonrpc\": \"2.0\", \"id\": 2}", response, false);
+        JSONAssert.assertEquals("{\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"Hello\"}]}}", jsonResponse, false);
+
+        // Strict Mode tests
+        String expectedResponseString = """
+                        {"id":2,"jsonrpc":"2.0","result":{"content":[{"type":"text","text":"Hello"}]}}
+                        """;
+        JSONAssert.assertEquals(expectedResponseString, response, true);
+    }
+
+    @Test
+    public void testEchoWithStringIdType() throws Exception {
+        String request = """
+                          {
+                          "jsonrpc": "2.0",
+                          "id": "2",
+                          "method": "tools/call",
+                          "params": {
+                            "name": "echo",
+                            "arguments": {
+                              "input": "Hello"
+                            }
+                          }
+                        }
+                        """;
+
+        String response = new HttpRequest(server, "/toolTest/mcp")
+                                                                  .requestProp("Accept", "application/json, text/event-stream")
+                                                                  .jsonBody(request)
+                                                                  .method("POST")
+                                                                  .run(String.class);
+
+        JSONObject jsonResponse = new JSONObject(response);
+
+        // Lenient mode tests
+        JSONAssert.assertEquals("{ \"jsonrpc\": \"2.0\", \"id\": \"2\"}", response, false);
+        JSONAssert.assertEquals("{\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"Hello\"}]}}", jsonResponse, false);
+
+        // Strict Mode tests
+        String expectedResponseString = """
+                        {"id":\"2\","jsonrpc":"2.0","result":{"content":[{"type":"text","text":"Hello"}]}}
+                        """;
+        JSONAssert.assertEquals(expectedResponseString, response, true);
     }
 
 }

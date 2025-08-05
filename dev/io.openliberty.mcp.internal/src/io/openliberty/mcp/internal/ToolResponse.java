@@ -17,11 +17,11 @@ import java.util.List;
  */
 public class ToolResponse {
 
-    private final String jsonrcp = "2.0";
-    private final String id;
+    private final String jsonrpc = "2.0";
+    private final Object id;
     private final Result result;
 
-    public static ToolResponse createFor(String id, Object result) {
+    public static ToolResponse createFor(Object id, Object result) {
         if (result instanceof String s) {
             ToolResponse response = new ToolResponse(id);
             response.result.content.add(new TextContent(s));
@@ -31,16 +31,16 @@ public class ToolResponse {
         }
     }
 
-    public ToolResponse(String id) {
+    public ToolResponse(Object id) {
         this.id = id;
         result = new Result();
     }
 
-    public String getJsonrcp() {
-        return jsonrcp;
+    public String getJsonrpc() {
+        return jsonrpc;
     }
 
-    public String getId() {
+    public Object getId() {
         return id;
     }
 

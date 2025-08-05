@@ -11,9 +11,11 @@ package io.openliberty.mcp.internal;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.LinkedList;
+import java.util.List;
 
 import io.openliberty.mcp.internal.requests.McpRequest;
-import io.openliberty.mcp.internal.requests.McpToolCallRequest;
+import io.openliberty.mcp.internal.requests.McpToolCallParams;
 import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.inject.Inject;
@@ -52,9 +54,17 @@ public class McpServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         // TODO: validate headers/contentType etc.
+        String accept = req.getHeader("Accept");
+        if (accept == null || !HeaderValidation.acceptContains(accept, "application/json") || !HeaderValidation.acceptContains(accept, "text/event-stream")) {
+            resp.setStatus(HttpServletResponse.SC_NOT_ACCEPTABLE);
+            resp.setContentType("application/json");
+            return;
+        } ;
+
         McpRequest request = jsonb.fromJson(req.getInputStream(), McpRequest.class);
         switch (request.getRequestMethod()) {
-            case TOOLS_CALL -> callTool((McpToolCallRequest) request, resp.getWriter());
+            case TOOLS_CALL -> callTool(request, resp.getWriter());
+            case TOOLS_LIST -> listTools(request, resp.getWriter());
             default -> throw new IllegalArgumentException("Unexpected value: " + request.getRequestMethod());
         }
     }
@@ -63,17 +73,39 @@ public class McpServlet extends HttpServlet {
      * @param request
      * @return
      */
-    private void callTool(McpToolCallRequest request, Writer writer) {
+    private void callTool(McpRequest request, Writer writer) {
+        McpToolCallParams params = request.getParams(McpToolCallParams.class, jsonb);
         CreationalContext<Void> cc = bm.createCreationalContext(null);
-        Object bean = bm.getReference(request.getBean(), request.getBean().getBeanClass(), cc);
+        Object bean = bm.getReference(params.getBean(), params.getBean().getBeanClass(), cc);
         ToolResponse response;
         try {
-            Object result = request.getMethod().invoke(bean, request.getArguments());
-            response = ToolResponse.createFor(request.getId(), result);
+            Object result = params.getMethod().invoke(bean, params.getArguments(jsonb));
+            response = ToolResponse.createFor(request.id(), result);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         jsonb.toJson(response, writer);
     }
 
+    /**
+     * @param request
+     * @return
+     */
+    private void listTools(McpRequest request, Writer writer) {
+        CreationalContext<Void> cc = bm.createCreationalContext(null);
+        ToolRegistry toolRegistry = ToolRegistry.get();
+
+        List<ToolDescription> response = new LinkedList();
+
+        if (toolRegistry.hasTools()) {
+            for (ToolMetadata tmd : toolRegistry.getAllTools()) {
+                response.add(new ToolDescription(tmd));
+            }
+            jsonb.toJson(response, writer);
+        } else {
+            // give back an empty response
+        }
+        // Debug only
+        System.out.println(jsonb.toJson(response));
+    }
 }

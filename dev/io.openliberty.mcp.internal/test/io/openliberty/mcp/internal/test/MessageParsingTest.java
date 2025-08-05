@@ -12,7 +12,6 @@ package io.openliberty.mcp.internal.test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
 
 import java.io.StringReader;
 import java.util.Map;
@@ -27,9 +26,10 @@ import io.openliberty.mcp.internal.ToolMetadata;
 import io.openliberty.mcp.internal.ToolMetadata.ArgumentMetadata;
 import io.openliberty.mcp.internal.ToolRegistry;
 import io.openliberty.mcp.internal.requests.McpRequest;
-import io.openliberty.mcp.internal.requests.McpToolCallRequest;
+import io.openliberty.mcp.internal.requests.McpToolCallParams;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
+import jakarta.json.bind.JsonbException;
 
 /**
  *
@@ -62,10 +62,49 @@ public class MessageParsingTest {
                         }
                         """);
         McpRequest request = jsonb.fromJson(reader, McpRequest.class);
-        assertThat(request.getId(), equalTo("2"));
+        assertThat(((Number) request.id()).intValue(), equalTo(2));
         assertThat(request.getRequestMethod(), equalTo(RequestMethod.TOOLS_CALL));
-        assertThat(request, instanceOf(McpToolCallRequest.class));
-        McpToolCallRequest toolCallRequest = (McpToolCallRequest) request;
-        assertThat(toolCallRequest.getArguments(), arrayContaining("Hello"));
+        McpToolCallParams toolCallRequest = request.getParams(McpToolCallParams.class, jsonb);
+        assertThat(toolCallRequest.getArguments(jsonb), arrayContaining("Hello"));
     }
+
+    @Test
+    public void parseStringIdType() {
+        Jsonb jsonb = JsonbBuilder.create();
+        StringReader reader = new StringReader("""
+                        {
+                          "jsonrpc": "2.0",
+                          "id": "2",
+                          "method": "tools/call",
+                          "params": {
+                            "name": "echo",
+                            "arguments": {
+                              "input": "Hello"
+                            }
+                          }
+                        }
+                        """);
+        McpRequest request = jsonb.fromJson(reader, McpRequest.class);
+        assertThat(request.id(), equalTo("2"));
+    }
+
+    @Test(expected = JsonbException.class)
+    public void validateFalseIdType() {
+        Jsonb jsonb = JsonbBuilder.create();
+        StringReader reader = new StringReader("""
+                        {
+                          "jsonrpc": "2.0",
+                          "id": false,
+                          "method": "tools/call",
+                          "params": {
+                            "name": "echo",
+                            "arguments": {
+                              "input": "Hello"
+                            }
+                          }
+                        }
+                        """);
+        jsonb.fromJson(reader, McpRequest.class);
+    }
+
 }
