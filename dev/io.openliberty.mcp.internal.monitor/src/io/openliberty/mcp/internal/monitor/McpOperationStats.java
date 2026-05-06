@@ -12,12 +12,22 @@ package io.openliberty.mcp.internal.monitor;
 import com.ibm.websphere.monitor.meters.StatisticsMeter;
 import com.ibm.websphere.monitor.meters.StatisticsReading;
 
-import io.openliberty.mcp.internal.monitoring.McpOperationStatAttributes;
+import io.openliberty.mcp.internal.monitoring.internal.McpOperationStatAttributes;
 
 import com.ibm.websphere.monitor.meters.Counter;
 import com.ibm.websphere.monitor.meters.Meter;
 
 
+/**
+ * Records statistics for MCP (Model Context Protocol) operations.
+ * <p>
+ * This class tracks metrics for individual MCP operations, including call counts and durations.
+ * A new instance is created for each unique combination of operation attributes (method name,
+ * tool name, error type, etc.). All instances are managed by {@link McpStatsMonitorImpl}.
+ * <p>
+ * The statistics are exposed via JMX through the {@link McpOperationStatsMXBean} interface
+ * and can be consumed by monitoring systems like MicroProfile Metrics and MicroProfile Telemetry.
+ */
 public class McpOperationStats extends Meter implements McpOperationStatsMXBean {
 	private final String mcpMethodName;
     
@@ -27,12 +37,7 @@ public class McpOperationStats extends Meter implements McpOperationStatsMXBean 
     private final String errorType, genAiPromptName, genAiToolName, rpcResponseStatusCode;
     
     /*
-     * Optional fields.
-     * We are unable to facilitate capturing Exceptions
-     * But we will leave it here.
-     * Additional Context : We can capture  exceptions thrown by servlets
-     * by surrounding the the chainFilter with try catch. But we have no way
-     * of capturing application exception of Jaxrs/restfulws exceptions
+     * Optional protocol and network attributes for the MCP operation
      */
     private final String genAiOperationName, jsonrpcProtocolVersion, mcpProtocolVersion, networkProtocolName, networkProtocolVersion, networkTransport, mcpResourceUri;
 	
@@ -58,8 +63,8 @@ public class McpOperationStats extends Meter implements McpOperationStatsMXBean 
 		toolCallCount.setDescription("Total calls of an MCP tool");
 		
 		toolCallRunDuration = new StatisticsMeter();
-		toolCallRunDuration.setDescription("Duration of tool call operations");
-		toolCallRunDuration.setUnit("seconds");
+		toolCallRunDuration.setDescription("Duration of MCP tool call operations");
+		toolCallRunDuration.setUnit("nanoseconds");
 
 	}
 

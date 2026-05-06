@@ -7,8 +7,9 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
-package io.openliberty.mcp.internal.monitoring;
+package io.openliberty.mcp.internal.monitoring.internal;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import com.ibm.websphere.ras.Tr;
@@ -16,8 +17,6 @@ import com.ibm.websphere.ras.TraceComponent;
 import com.ibm.ws.ffdc.annotation.FFDCIgnore;
 
 public class McpSessionStatAttributes {
-
-    private final String mcpStat_ID;
 
     private static final TraceComponent tc = Tr.register(McpSessionStatAttributes.class);
 
@@ -39,7 +38,6 @@ public class McpSessionStatAttributes {
      * @throws IllegalStateException if the builder's validation fails
      */
     /**
-     * @param httpStat_ID
      * @param errorType
      * @param jsonrpcProtocolVersion
      * @param mcpProtocolVersion
@@ -57,20 +55,6 @@ public class McpSessionStatAttributes {
         this.networkProtocolName = (builder.networkProtocolName.isPresent() ? builder.networkProtocolName.get() : null);
         this.networkProtocolVersion = (builder.networkProtocolVersion.isPresent() ? builder.networkProtocolVersion.get() : null);
         this.networkTransport = (builder.networkTransport.isPresent() ? builder.networkTransport.get() : null);
-
-        StringBuilder mcpStatIDBuilder = new StringBuilder("session");
-        if (this.errorType != null) {
-            mcpStatIDBuilder.append("_").append(this.errorType);
-        }
-
-        this.mcpStat_ID = mcpStatIDBuilder.toString();
-    }
-
-    /**
-     * @return the httpStat_ID
-     */
-    public String getMcpStat_ID() {
-        return mcpStat_ID;
     }
 
     /**
@@ -125,9 +109,30 @@ public class McpSessionStatAttributes {
     /** {@inheritDoc} */
     @Override
     public String toString() {
-        return "McpSessionStatAttributes [mcpStat_ID=" + mcpStat_ID + ", errorType=" + errorType + ", jsonrpcProtocolVersion=" + jsonrpcProtocolVersion
+        return "McpSessionStatAttributes [errorType=" + errorType + ", jsonrpcProtocolVersion=" + jsonrpcProtocolVersion
                + ", mcpProtocolVersion=" + mcpProtocolVersion + ", networkProtocolName=" + networkProtocolName + ", networkProtocolVersion=" + networkProtocolVersion
                + ", networkTransport=" + networkTransport + "]";
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(errorType, jsonrpcProtocolVersion, mcpProtocolVersion,
+                networkProtocolName, networkProtocolVersion, networkTransport);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
+        McpSessionStatAttributes other = (McpSessionStatAttributes) obj;
+        return Objects.equals(errorType, other.errorType)
+                && Objects.equals(jsonrpcProtocolVersion, other.jsonrpcProtocolVersion)
+                && Objects.equals(mcpProtocolVersion, other.mcpProtocolVersion)
+                && Objects.equals(networkProtocolName, other.networkProtocolName)
+                && Objects.equals(networkProtocolVersion, other.networkProtocolVersion)
+                && Objects.equals(networkTransport, other.networkTransport);
     }
 
     public static Builder builder() {
@@ -228,3 +233,5 @@ public class McpSessionStatAttributes {
 
     }
 }
+
+// Made with Bob

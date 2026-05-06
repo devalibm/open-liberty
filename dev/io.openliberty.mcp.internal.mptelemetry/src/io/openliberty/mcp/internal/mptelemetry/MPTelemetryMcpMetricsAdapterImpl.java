@@ -43,8 +43,8 @@ import com.ibm.ws.container.service.state.StateChangeException;
 import com.ibm.ws.runtime.metadata.ComponentMetaData;
 
 import io.openliberty.mcp.internal.monitor.metrics.McpMetricAdapter;
-import io.openliberty.mcp.internal.monitoring.McpOperationStatAttributes;
-import io.openliberty.mcp.internal.monitoring.McpSessionStatAttributes;
+import io.openliberty.mcp.internal.monitoring.internal.McpOperationStatAttributes;
+import io.openliberty.mcp.internal.monitoring.internal.McpSessionStatAttributes;
 import io.openliberty.microprofile.telemetry.internal.common.constants.OpenTelemetryConstants;
 import io.openliberty.microprofile.telemetry.internal.interfaces.OpenTelemetryAccessor;
 import io.opentelemetry.api.OpenTelemetry;
@@ -378,6 +378,17 @@ public class MPTelemetryMcpMetricsAdapterImpl implements McpMetricAdapter, Appli
         if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
             Tr.debug(tc,
                      String.format("Detected that application %s has stopped. Removed a corresponding Map<String, Attributes> entry? [%b]", appName, (map != null)));
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void removeMetricsForApp(String appName) {
+        Map<String, Attributes> map = appNameToAttributesMap.remove(appName);
+
+        if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
+            Tr.debug(tc,
+                     String.format("Removing metrics for application %s. Removed a corresponding Map<String, Attributes> entry? [%b]", appName, (map != null)));
         }
     }
 }

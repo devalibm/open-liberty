@@ -12,8 +12,8 @@ package io.openliberty.mcp.internal.monitor;
 import com.ibm.websphere.monitor.meters.StatisticsMeter;
 import com.ibm.websphere.monitor.meters.StatisticsReading;
 
-import io.openliberty.mcp.internal.monitoring.McpOperationStatAttributes;
-import io.openliberty.mcp.internal.monitoring.McpSessionStatAttributes;
+import io.openliberty.mcp.internal.monitoring.internal.McpOperationStatAttributes;
+import io.openliberty.mcp.internal.monitoring.internal.McpSessionStatAttributes;
 
 import com.ibm.websphere.monitor.meters.Counter;
 import com.ibm.websphere.monitor.meters.Meter;
@@ -27,12 +27,7 @@ public class McpSessionStatistics extends Meter implements McpSessionStatisticsM
     private final String errorType;
     
     /*
-     * Optional fields.
-     * We are unable to facilitate capturing Exceptions
-     * But we will leave it here.
-     * Additional Context : We can capture  exceptions thrown by servlets
-     * by surrounding the the chainFilter with try catch. But we have no way
-     * of capturing application exception of Jaxrs/restfulws exceptions
+     * Optional protocol and network attributes for the MCP session
      */
     private final String jsonrpcProtocolVersion, mcpProtocolVersion, networkProtocolName, networkProtocolVersion, networkTransport;
 	
@@ -48,20 +43,21 @@ public class McpSessionStatistics extends Meter implements McpSessionStatisticsM
 		this.networkProtocolVersion = mcpStatAttributes.getNetworkProtocolVersion();
 		this.networkTransport = mcpStatAttributes.getNetworkTransport();
 		
+		// Total number of MCP sessions that have been created
 		sessionCount = new Counter();
-		sessionCount.setDescription("MCP sessions");
+		sessionCount.setDescription("Total number of MCP sessions");
 		
 		sessionDuration = new StatisticsMeter();
-		sessionDuration.setDescription("Duration of session");
-		sessionDuration.setUnit("seconds");
+		sessionDuration.setDescription("Duration of MCP session");
+		sessionDuration.setUnit("nanoseconds");
 
 	}
 
-	public void incrementToolCallCountBy(int i) {
+	public void incrementSessionCountBy(int i) {
 		sessionCount.incrementBy(i);
 	}
 	
-	public void addToolTimeStat(long time) {
+	public void addSessionDurationStat(long time) {
 		sessionDuration.addDataPoint(time);
 	}
 

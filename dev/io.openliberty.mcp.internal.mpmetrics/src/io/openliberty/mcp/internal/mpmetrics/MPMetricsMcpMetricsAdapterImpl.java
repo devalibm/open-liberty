@@ -45,8 +45,8 @@ import com.ibm.ws.container.service.state.StateChangeException;
 import com.ibm.ws.runtime.metadata.ComponentMetaData;
 
 import io.openliberty.mcp.internal.monitor.metrics.McpMetricAdapter;
-import io.openliberty.mcp.internal.monitoring.McpOperationStatAttributes;
-import io.openliberty.mcp.internal.monitoring.McpSessionStatAttributes;
+import io.openliberty.mcp.internal.monitoring.internal.McpOperationStatAttributes;
+import io.openliberty.mcp.internal.monitoring.internal.McpSessionStatAttributes;
 import io.openliberty.microprofile.metrics50.SharedMetricRegistries;
 import io.openliberty.mcp.internal.mpmetrics.constants.Constants;
 
@@ -263,6 +263,18 @@ public class MPMetricsMcpMetricsAdapterImpl implements McpMetricAdapter, Applica
         if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
             Tr.debug(tc, String.format(
                     "Detected that application %s has stopped. Removed a corresponding Map<String, Attributes> entry? [%b]",
+                    appName, (map != null)));
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void removeMetricsForApp(String appName) {
+        Map<String, Tag[]> map = appNameToTagsMap.remove(appName);
+
+        if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
+            Tr.debug(tc, String.format(
+                    "Removing metrics for application %s. Removed a corresponding Map<String, Tag[]> entry? [%b]",
                     appName, (map != null)));
         }
     }
