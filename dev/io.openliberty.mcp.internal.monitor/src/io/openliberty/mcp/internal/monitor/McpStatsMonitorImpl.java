@@ -57,6 +57,23 @@ public class McpStatsMonitorImpl extends StatisticActions implements McpStatsMon
 	
 	@PublishedMetric
 	public MeterCollection<McpSessionStatistics> mcpSessionStatsCollection = new MeterCollection<McpSessionStatistics>("McpSession", this);
+	/**
+	 * Generates a unique String ID for MeterCollection from operation stat attributes.
+	 * MeterCollection requires String keys for JMX ObjectName registration. The toString() method
+	 * creates a JMX-safe identifier by joining all non-null attribute values with underscores.
+	 */
+	private static String generateOperationStatId(McpOperationStatAttributes attrs) {
+		return attrs.toString();
+	}
+	
+	/**
+	 * Generates a unique String ID for MeterCollection from session stat attributes.
+	 * MeterCollection requires String keys for JMX ObjectName registration. The toString() method
+	 * creates a JMX-safe identifier by joining all non-null attribute values with underscores.
+	 */
+	private static String generateSessionStatId(McpSessionStatAttributes attrs) {
+		return attrs.toString();
+	}
 
 
     /**
@@ -75,9 +92,10 @@ public class McpStatsMonitorImpl extends StatisticActions implements McpStatsMon
 		/*
 		 * Create and/or update MBean
 		 */
-		McpOperationStats mcpStats = mcpOperationStatsCollection.get(mcpStatsAttributes);
+		String statId = generateOperationStatId(mcpStatsAttributes);
+		McpOperationStats mcpStats = mcpOperationStatsCollection.get(statId);
 		if (mcpStats == null) {
-			mcpStats = initializeMcpOperationStat(mcpStatsAttributes, appName);
+			mcpStats = initializeMcpOperationStat(mcpStatsAttributes, statId, appName);
 			//Shutdown by the monitor-1.0 filter - shows over
 			if (mcpStats == null) {
 				return;
@@ -110,9 +128,10 @@ public class McpStatsMonitorImpl extends StatisticActions implements McpStatsMon
 		/*
 		 * Create and/or update MBean
 		 */
-		McpSessionStatistics mcpStats = mcpSessionStatsCollection.get(mcpStatsAttributes);
+		String statId = generateSessionStatId(mcpStatsAttributes);
+		McpSessionStatistics mcpStats = mcpSessionStatsCollection.get(statId);
 		if (mcpStats == null) {
-			mcpStats = initializeMcpSessionStat(mcpStatsAttributes, appName);
+			mcpStats = initializeMcpSessionStat(mcpStatsAttributes, statId, appName);
 			//Shutdown by the monitor-1.0 filter - shows over
 			if (mcpStats == null) {
 				return;
@@ -129,7 +148,7 @@ public class McpStatsMonitorImpl extends StatisticActions implements McpStatsMon
 		});
 	}
 
-	private McpOperationStats initializeMcpOperationStat(McpOperationStatAttributes statAttri, String appName) {
+	private McpOperationStats initializeMcpOperationStat(McpOperationStatAttributes statAttri, String statId, String appName) {
 		if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
 			Tr.debug(tc, "initializeMcpOperationStat", statAttri);
 		}
@@ -138,15 +157,15 @@ public class McpStatsMonitorImpl extends StatisticActions implements McpStatsMon
 			/*
 			 * Check again it was added, thread that was blocking may have been adding it
 			 */
-			if (mcpOperationStatsCollection.get(statAttri) != null) {
-				return mcpOperationStatsCollection.get(statAttri);
+			if (mcpOperationStatsCollection.get(statId) != null) {
+				return mcpOperationStatsCollection.get(statId);
 			}
 
 			McpOperationStats mcpMetricStats = new McpOperationStats(statAttri);
-			mcpOperationStatsCollection.put(statAttri, mcpMetricStats);
+			mcpOperationStatsCollection.put(statId, mcpMetricStats);
 			
 			//Shut down by monitor-1.0 filter attribute
-			if (mcpOperationStatsCollection.get(statAttri) == null) {
+			if (mcpOperationStatsCollection.get(statId) == null) {
 				return null;
 			}
 			
@@ -164,7 +183,7 @@ public class McpStatsMonitorImpl extends StatisticActions implements McpStatsMon
 		}
 	}
 	
-	private McpSessionStatistics initializeMcpSessionStat(McpSessionStatAttributes statAttri, String appName) {
+	private McpSessionStatistics initializeMcpSessionStat(McpSessionStatAttributes statAttri, String statId, String appName) {
 		if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
 			Tr.debug(tc, "initializeMcpSessionStat", statAttri);
 		}
@@ -173,15 +192,15 @@ public class McpStatsMonitorImpl extends StatisticActions implements McpStatsMon
 			/*
 			 * Check again it was added, thread that was blocking may have been adding it
 			 */
-			if (mcpSessionStatsCollection.get(statAttri) != null) {
-				return mcpSessionStatsCollection.get(statAttri);
+			if (mcpSessionStatsCollection.get(statId) != null) {
+				return mcpSessionStatsCollection.get(statId);
 			}
 
 			McpSessionStatistics mcpMetricStats = new McpSessionStatistics(statAttri);
-			mcpSessionStatsCollection.put(statAttri, mcpMetricStats);
+			mcpSessionStatsCollection.put(statId, mcpMetricStats);
 			
 			//Shut down by monitor-1.0 filter attribute
-			if (mcpSessionStatsCollection.get(statAttri) == null) {
+			if (mcpSessionStatsCollection.get(statId) == null) {
 				return null;
 			}
 			
@@ -215,14 +234,16 @@ public class McpStatsMonitorImpl extends StatisticActions implements McpStatsMon
 		
 		if (operationStats != null) {
 			for (McpOperationStatAttributes statAttri : operationStats) {
-				mcpOperationStatsCollection.remove(statAttri);
+				String statId = generateOperationStatId(statAttri);
+				mcpOperationStatsCollection.remove(statId);
 				removedCount++;
 			}
 		}
 		
 		if (sessionStats != null) {
 			for (McpSessionStatAttributes statAttri : sessionStats) {
-				mcpSessionStatsCollection.remove(statAttri);
+				String statId = generateSessionStatId(statAttri);
+				mcpSessionStatsCollection.remove(statId);
 				removedCount++;
 			}
 		}

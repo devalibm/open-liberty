@@ -31,7 +31,7 @@ public class McpSessionStatAttributes {
     private final String jsonrpcProtocolVersion, mcpProtocolVersion, networkProtocolName, networkProtocolVersion, networkTransport;
 
     /**
-     * Constructor for HttpStatsAttributes. This should not be called directly, but
+     * Constructor for McpSessionStatAttributes. This should not be called directly, but
      * should be instantiated through {@link Builder#build()}
      *
      * @param builder see {@link Builder}
@@ -106,12 +106,23 @@ public class McpSessionStatAttributes {
         return networkTransport;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * Generates a JMX-safe identifier string by concatenating all non-null attribute values with underscores.
+     * This string is used as the key for MBean registration in the Liberty monitoring framework.
+     * The underscore separates different attributes, but attribute values are preserved as-is.
+     *
+     * @return a string representation suitable for use as a JMX ObjectName property value
+     */
     @Override
     public String toString() {
-        return "McpSessionStatAttributes [errorType=" + errorType + ", jsonrpcProtocolVersion=" + jsonrpcProtocolVersion
-               + ", mcpProtocolVersion=" + mcpProtocolVersion + ", networkProtocolName=" + networkProtocolName + ", networkProtocolVersion=" + networkProtocolVersion
-               + ", networkTransport=" + networkTransport + "]";
+        return String.join("_",
+            java.util.stream.Stream.of(
+                errorType, jsonrpcProtocolVersion, mcpProtocolVersion,
+                networkProtocolName, networkProtocolVersion, networkTransport
+            )
+            .filter(s -> s != null)
+            .toArray(String[]::new)
+        );
     }
 
     @Override
@@ -144,7 +155,7 @@ public class McpSessionStatAttributes {
         private String mcpMethodName;
 
         /*
-         * Conditionally required as per HTTP Semantics Convention
+         * Conditionally required fields for MCP sessions
          */
         private Optional<String> errorType = Optional.empty();
 
@@ -169,11 +180,11 @@ public class McpSessionStatAttributes {
         Builder() {}
 
         /**
-         * Builds an instance of {@link HttpStatAttributes} with values from this
+         * Builds an instance of {@link McpSessionStatAttributes} with values from this
          * builder. Will validate and throw an {@link IllegalStateException} if the
          * required fields are not filled.
          *
-         * @return Instance of {@link HttpStatAttributes}
+         * @return Instance of {@link McpSessionStatAttributes}
          * @throws IllegalStateException
          */
         @FFDCIgnore(value = { IllegalStateException.class })
@@ -183,7 +194,7 @@ public class McpSessionStatAttributes {
             } catch (IllegalStateException ise) {
                 //do nothing
                 if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
-                    Tr.debug(tc, String.format("Invalid HTTP Stats attributes : \n %s", toString()));
+                    Tr.debug(tc, String.format("Invalid MCP Stats attributes : \n %s", toString()));
                 }
             }
             return null;

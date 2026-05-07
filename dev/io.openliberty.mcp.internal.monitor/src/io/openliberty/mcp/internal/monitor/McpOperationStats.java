@@ -11,6 +11,8 @@ package io.openliberty.mcp.internal.monitor;
 
 import com.ibm.websphere.monitor.meters.StatisticsMeter;
 import com.ibm.websphere.monitor.meters.StatisticsReading;
+import com.ibm.websphere.ras.Tr;
+import com.ibm.websphere.ras.TraceComponent;
 
 import io.openliberty.mcp.internal.monitoring.internal.McpOperationStatAttributes;
 
@@ -29,11 +31,13 @@ import com.ibm.websphere.monitor.meters.Meter;
  * and can be consumed by monitoring systems like MicroProfile Metrics and MicroProfile Telemetry.
  */
 public class McpOperationStats extends Meter implements McpOperationStatsMXBean {
+    private static final TraceComponent tc = Tr.register(McpOperationStats.class);
+
 	private final String mcpMethodName;
     
     /*
-     * Conditionally required as per HTTP Semantics Convention
-     */ 
+     * Conditionally required fields for MCP operations
+     */
     private final String errorType, genAiPromptName, genAiToolName, rpcResponseStatusCode;
     
     /*
@@ -60,11 +64,11 @@ public class McpOperationStats extends Meter implements McpOperationStatsMXBean 
 		this.mcpResourceUri = mcpStatAttributes.getMcpResourceUri();
 		
 		toolCallCount = new Counter();
-		toolCallCount.setDescription("Total calls of an MCP tool");
+		toolCallCount.setDescription(Tr.formatMessage(tc, "mcp.operation.count.description"));
 		
 		toolCallRunDuration = new StatisticsMeter();
-		toolCallRunDuration.setDescription("Duration of MCP tool call operations");
-		toolCallRunDuration.setUnit("nanoseconds");
+		toolCallRunDuration.setDescription(Tr.formatMessage(tc, "mcp.operation.duration.description"));
+		toolCallRunDuration.setUnit(Tr.formatMessage(tc, "mcp.metric.unit.nanoseconds"));
 
 	}
 

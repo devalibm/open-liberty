@@ -38,9 +38,10 @@ public class MetricsManager {
 
 
     /**
-     * 
-     * @param httpStatAttributes
-     * @param duration
+     * Updates MCP operation duration metrics across all registered metric adapters.
+     *
+     * @param mcpStatsAttribute the MCP operation attributes
+     * @param duration the operation duration
      */
 	public void updateMcpOperationDurationMetrics(McpOperationStatAttributes mcpStatsAttribute , Duration duration) {
 		if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
@@ -56,10 +57,11 @@ public class MetricsManager {
 	}
 	
 	/**
-     * 
-     * @param httpStatAttributes
-     * @param duration
-     */
+	    * Updates MCP session duration metrics across all registered metric adapters.
+	    *
+	    * @param mcpStatsAttribute the MCP session attributes
+	    * @param duration the session duration
+	    */
 	public void updateMcpSessionDurationMetrics(McpSessionStatAttributes mcpStatsAttribute , Duration duration) {
 		if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
 	        Tr.debug(tc, "Forwarding metrics to " + mcpMetricRuntimes.size() + " adapters");

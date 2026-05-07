@@ -11,6 +11,8 @@ package io.openliberty.mcp.internal.monitor;
 
 import com.ibm.websphere.monitor.meters.StatisticsMeter;
 import com.ibm.websphere.monitor.meters.StatisticsReading;
+import com.ibm.websphere.ras.Tr;
+import com.ibm.websphere.ras.TraceComponent;
 
 import io.openliberty.mcp.internal.monitoring.internal.McpOperationStatAttributes;
 import io.openliberty.mcp.internal.monitoring.internal.McpSessionStatAttributes;
@@ -21,9 +23,11 @@ import com.ibm.websphere.monitor.meters.Meter;
 
 public class McpSessionStatistics extends Meter implements McpSessionStatisticsMXBean {
     
+    private static final TraceComponent tc = Tr.register(McpSessionStatistics.class);
+    
     /*
-     * Conditionally required as per HTTP Semantics Convention
-     */ 
+     * Conditionally required fields for MCP sessions
+     */
     private final String errorType;
     
     /*
@@ -45,11 +49,11 @@ public class McpSessionStatistics extends Meter implements McpSessionStatisticsM
 		
 		// Total number of MCP sessions that have been created
 		sessionCount = new Counter();
-		sessionCount.setDescription("Total number of MCP sessions");
+		sessionCount.setDescription(Tr.formatMessage(tc, "mcp.session.count.description"));
 		
 		sessionDuration = new StatisticsMeter();
-		sessionDuration.setDescription("Duration of MCP session");
-		sessionDuration.setUnit("nanoseconds");
+		sessionDuration.setDescription(Tr.formatMessage(tc, "mcp.session.duration.description"));
+		sessionDuration.setUnit(Tr.formatMessage(tc, "mcp.metric.unit.nanoseconds"));
 
 	}
 

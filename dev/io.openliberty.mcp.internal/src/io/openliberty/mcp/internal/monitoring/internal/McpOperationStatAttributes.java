@@ -37,14 +37,12 @@ public class McpOperationStatAttributes {
     private static final TraceComponent tc = Tr.register(McpOperationStatAttributes.class);
 
     /*
-     * Mandatory fields - Technically networkProtocolName is optional as per http semantics
-     * It is conditionally required if scheme is NOT http and protocol version is set.
-     * But we'll make it mandatory anyways
+     * Mandatory fields - The MCP method name is required to identify the operation type.
      */
     private final String mcpMethodName;
 
     /*
-     * Conditionally required as per HTTP Semantics Convention
+     * Conditionally required fields for MCP operations
      */
     private final String errorType, genAiPromptName, genAiToolName, rpcResponseStatusCode;
 
@@ -175,15 +173,25 @@ public class McpOperationStatAttributes {
         return mcpResourceUri;
     }
 
+    /**
+     * Generates a JMX-safe identifier string by concatenating all non-null attribute values with underscores.
+     * This string is used as the key for MBean registration in the Liberty monitoring framework.
+     * The underscore separates different attributes, but attribute values are preserved as-is.
+     *
+     * @return a string representation suitable for use as a JMX ObjectName property value
+     */
     @Override
     public String toString() {
-        return "McpOperationStatAttributes [mcpMethodName=" + mcpMethodName + ", errorType="
-               + errorType + ", genAiPromptName=" + genAiPromptName + ", genAiToolName=" + genAiToolName
-               + ", rpcResponseStatusCode=" + rpcResponseStatusCode + ", genAiOperationName=" + genAiOperationName
-               + ", jsonrpcProtocolVersion=" + jsonrpcProtocolVersion + ", mcpProtocolVersion="
-               + mcpProtocolVersion + ", networkProtocolName=" + networkProtocolName + ", networkProtocolVersion="
-               + networkProtocolVersion + ", networkTransport=" + networkTransport + ", mcpResourceUri="
-               + mcpResourceUri + "]";
+        return String.join("_",
+            java.util.stream.Stream.of(
+                mcpMethodName, genAiToolName, errorType, genAiPromptName,
+                rpcResponseStatusCode, genAiOperationName, jsonrpcProtocolVersion,
+                mcpProtocolVersion, networkProtocolName, networkProtocolVersion,
+                networkTransport, mcpResourceUri
+            )
+            .filter(s -> s != null)
+            .toArray(String[]::new)
+        );
     }
 
     @Override
@@ -254,11 +262,11 @@ public class McpOperationStatAttributes {
         Builder() {}
 
         /**
-         * Builds an instance of {@link HttpStatAttributes} with values from this
+         * Builds an instance of {@link McpOperationStatAttributes} with values from this
          * builder. Will validate and throw an {@link IllegalStateException} if the
          * required fields are not filled.
-         * 
-         * @return Instance of {@link HttpStatAttributes}
+         *
+         * @return Instance of {@link McpOperationStatAttributes}
          * @throws IllegalStateException
          */
         @FFDCIgnore(value = { IllegalStateException.class })
@@ -268,7 +276,7 @@ public class McpOperationStatAttributes {
             } catch (IllegalStateException ise) {
                 //do nothing
                 if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
-                    Tr.debug(tc, String.format("Invalid HTTP Stats attributes : \n %s", toString()));
+                    Tr.debug(tc, String.format("Invalid MCP Stats attributes : \n %s", toString()));
                 }
             }
             return null;
